@@ -1,60 +1,92 @@
-import os
 import importlib
 import json
+import logging
+import os
 import pkgutil
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any
 
+import torch
 from datasets import (
     DatasetDict,
     concatenate_datasets,
-    get_dataset_config_names as _get_dataset_config_names,
-    load_dataset as _load_dataset,
     load_from_disk,
 )
-import torch
+from datasets import (
+    get_dataset_config_names as _get_dataset_config_names,
+)
+from datasets import (
+    load_dataset as _load_dataset,
+)
 from transformers import (
     AutoModelForCausalLM,
     AutoModelForSequenceClassification,
     AutoTokenizer,
 )
 
+LOGGER = logging.getLogger(__name__)
 
-def get_dataset_config_names(path):
+
+def get_dataset_config_names(path: str) -> list[str]:
+    """Return available configuration names for a dataset path."""
     path = resolve_dataset_path(path)
     return _get_dataset_config_names(path)
-    
-    
-def load_dataset(path, name=None, split=None, filter_fn=None, process_fn=None):
+
+
+def load_dataset(
+    path: str,
+    name: str | list[str] | None = None,
+    split: str | list[str] | None = None,
+    filter_fn: Callable[[dict[str, Any]], bool] | None = None,
+    process_fn: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
+) -> Any:
+    """Load and concatenate one or multiple datasets from disk or HF hub.
+
+    Args:
+        path: Dataset identifier or local path.
+        name: Optional config name(s).
+        split: Optional split name(s).
+        filter_fn: Optional filtering callable applied after loading.
+        process_fn: Optional mapping callable applied after filtering.
+
+    Returns:
+        A concatenated Hugging Face dataset.
+    """
     path = resolve_dataset_path(path)
     names = [name] if not isinstance(name, list) else name
     splits = [split] if not isinstance(split, list) else split
     dataset = []
 
     try:
-        for name in names:
-            for split in splits:
-                lfd_path = path + f"/{name}" * bool(name) + f"/{split}" * bool(split)
+        for dataset_name in names:
+            for dataset_split in splits:
+                lfd_path = (
+                    path
+                    + f"/{dataset_name}" * bool(dataset_name)
+                    + f"/{dataset_split}" * bool(dataset_split)
+                )
                 dataset.append(load_from_disk(lfd_path))
-        
-    except:
-        for name in names:
-            for split in splits:
+
+    except Exception as exc:
+        LOGGER.debug("Falling back to HF dataset loading for '%s' due to: %s", path, exc)
+        for dataset_name in names:
+            for dataset_split in splits:
                 ld_kwargs = {
-                    "path": path, 
-                    "split": split,
-                    **({"name": name} if name is not None else {})
+                    "path": path,
+                    "split": dataset_split,
+                    **({"name": dataset_name} if dataset_name is not None else {}),
                 }
                 dataset.append(_load_dataset(**ld_kwargs))
 
     if isinstance(dataset[0], DatasetDict):
-        dataset = concatenate_datasets(
-            [ds_dict[split] for ds_dict in dataset for split in ds_dict]
-        )
+        dataset = concatenate_datasets([ds_dict[split] for ds_dict in dataset for split in ds_dict])
     else:
         dataset = concatenate_datasets(dataset)
-    
+
     if filter_fn is not None:
         dataset = dataset.filter(
-            filter_fn, 
+            filter_fn,
             keep_in_memory=True,
             load_from_cache_file=False,
         )
@@ -70,11 +102,12 @@ def load_dataset(path, name=None, split=None, filter_fn=None, process_fn=None):
 
 
 def load_vllm_generator(
-    path,
-    trust_remote_code=False,
-    dtype="bfloat16",
-    tensor_parallel_size=1,
-):
+    path: str,
+    trust_remote_code: bool = False,
+    dtype: str = "bfloat16",
+    tensor_parallel_size: int = 1,
+) -> Any:
+    """Load a vLLM generator model instance."""
     try:
         LLM = importlib.import_module("vllm").LLM
     except Exception as exc:
@@ -84,7 +117,7 @@ def load_vllm_generator(
 
     path = resolve_model_path(path)
     return LLM(
-        path, 
+        path,
         trust_remote_code=trust_remote_code,
         dtype=dtype,
         tensor_parallel_size=tensor_parallel_size,
@@ -92,27 +125,29 @@ def load_vllm_generator(
 
 
 def load_hf_generator(
-    path,
-    trust_remote_code=False,
-    dtype="bfloat16",
-    device_map="auto",
-):
+    path: str,
+    trust_remote_code: bool = False,
+    dtype: str = "bfloat16",
+    device_map: str = "auto",
+) -> AutoModelForCausalLM:
+    """Load a causal language model from Hugging Face."""
     path = resolve_model_path(path)
     dtype = resolve_torch_dtype(dtype)
     return AutoModelForCausalLM.from_pretrained(
         path,
         trust_remote_code=trust_remote_code,
         torch_dtype=dtype,
-        device_map=device_map, 
+        device_map=device_map,
     )
 
 
 def load_hf_encoder(
-    path,
-    trust_remote_code=False,
-    dtype="bfloat16",
-    device_map="auto",
-):
+    path: str,
+    trust_remote_code: bool = False,
+    dtype: str = "bfloat16",
+    device_map: str = "auto",
+) -> AutoModelForSequenceClassification:
+    """Load a sequence classification model from Hugging Face."""
     path = resolve_model_path(path)
     dtype = resolve_torch_dtype(dtype)
     return AutoModelForSequenceClassification.from_pretrained(
@@ -120,14 +155,15 @@ def load_hf_encoder(
         num_labels=2,
         trust_remote_code=trust_remote_code,
         torch_dtype=dtype,
-        device_map=device_map, 
+        device_map=device_map,
     )
 
 
 def load_hf_tokenizer(
-    path,
-    trust_remote_code=False,
-):
+    path: str,
+    trust_remote_code: bool = False,
+) -> AutoTokenizer:
+    """Load a tokenizer from Hugging Face."""
     path = resolve_model_path(path)
     return AutoTokenizer.from_pretrained(
         path,
@@ -135,25 +171,28 @@ def load_hf_tokenizer(
     )
 
 
-def resolve_dataset_path(path):
+def resolve_dataset_path(path: str) -> str:
+    """Resolve dataset path from LOCAL_DATASETS_DIR when configured."""
     if "LOCAL_DATASETS_DIR" in os.environ:
         path = os.path.join(
-            os.environ["LOCAL_DATASETS_DIR"], 
+            os.environ["LOCAL_DATASETS_DIR"],
             path.split("/")[-1],
         )
     return path
 
 
-def resolve_model_path(path):
+def resolve_model_path(path: str) -> str:
+    """Resolve model path from LOCAL_MODELS_DIR when configured."""
     if "LOCAL_MODELS_DIR" in os.environ:
         path = os.path.join(
-            os.environ["LOCAL_MODELS_DIR"], 
+            os.environ["LOCAL_MODELS_DIR"],
             path.split("/")[-1],
         )
     return path
 
 
-def resolve_torch_dtype(dtype):
+def resolve_torch_dtype(dtype: str | torch.dtype) -> str | torch.dtype:
+    """Resolve string dtype to torch dtype or pass through accepted values."""
     if isinstance(dtype, torch.dtype):
         return dtype
     if dtype == "auto":
@@ -163,7 +202,8 @@ def resolve_torch_dtype(dtype):
     raise ValueError(f"Unsupported dtype: {dtype}")
 
 
-def parse_tasks(task_values):
+def parse_tasks(task_values: list[str]) -> list[str]:
+    """Parse mixed comma/space-separated task CLI values."""
     tasks = []
     for value in task_values:
         for task_name in value.split(","):
@@ -173,8 +213,11 @@ def parse_tasks(task_values):
     return tasks
 
 
-def discover_task_functions(package_name="bert_judge.tasks"):
-    discovered = {}
+def discover_task_functions(
+    package_name: str = "bert_judge.tasks",
+) -> dict[str, Callable[..., Any]]:
+    """Discover callable task factory functions in a task package."""
+    discovered: dict[str, Callable[..., Any]] = {}
     package = importlib.import_module(package_name)
     for module_info in pkgutil.iter_modules(package.__path__):
         if module_info.name.startswith("_"):
@@ -191,7 +234,16 @@ def discover_task_functions(package_name="bert_judge.tasks"):
     return discovered
 
 
-def load_json_list(path):
+def load_json_list(path: Path) -> list[Any]:
+    """Load and validate a JSON list from disk.
+
+    Args:
+        path: Path to a JSON file.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        TypeError: If the JSON payload is not a list.
+    """
     if not path.exists():
         raise FileNotFoundError(f"File not found: {path}")
 
@@ -202,5 +254,6 @@ def load_json_list(path):
     return data
 
 
-def get_model_name(model_path):
+def get_model_name(model_path: str | Path) -> str:
+    """Return a normalized model directory name from a model path."""
     return str(model_path).rstrip("/").split("/")[-1].replace("-", "_")

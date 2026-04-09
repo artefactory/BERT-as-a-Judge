@@ -1,11 +1,11 @@
-import json
 import os
+from typing import Any
 
+import torch
 from datasets import (
     Dataset,
     concatenate_datasets,
 )
-import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import (
@@ -21,57 +21,61 @@ from ..utils import (
 
 
 class BERTJudge:
+    """Encoder-based judge trained for reference-based candidate evaluation."""
+
     def __init__(
         self,
-        model_path,
-        trust_remote_code=False,
-        dtype="bfloat16",
-        device_map="auto",
-    ):
+        model_path: str,
+        trust_remote_code: bool = False,
+        dtype: str = "bfloat16",
+        device_map: str = "auto",
+    ) -> None:
+        """Initialize model, tokenizer, and required special tokens."""
         self.special_tokens = {
             "question": "<|question|>",
             "candidate": "<|candidate|>",
             "reference": "<|reference|>",
         }
         self.model = load_hf_encoder(
-            model_path, 
+            model_path,
             trust_remote_code,
             dtype,
             device_map,
         )
-        self.max_length = getattr(self.model.config, "max_position_embeddings")
+        self.max_length = self.model.config.max_position_embeddings
         self.tokenizer = load_hf_tokenizer(
-            model_path, 
+            model_path,
             trust_remote_code=trust_remote_code,
         )
         self._add_special_tokens()
 
     def fit(
         self,
-        dataset,
-        output_dir,
-        include_question=True,
-        training_mix=None,
-        num_train_epochs=1,
-        batch_size=4,
-        learning_rate=2e-5,
-        warmup_ratio=0.05,
-        lr_scheduler_type="linear",
-        logging_strategy="steps",
-        logging_steps=10,
-        logging_dir=None,
-        report_to=None,
-        save_strategy="steps",
-        save_steps=500,
-        save_total_limit=1,
-        seed=0,
-    ):                
+        dataset: dict[str, Any],
+        output_dir: str,
+        include_question: bool = True,
+        training_mix: dict[str, dict[str, int]] | None = None,
+        num_train_epochs: float = 1,
+        batch_size: int = 4,
+        learning_rate: float = 2e-5,
+        warmup_ratio: float = 0.05,
+        lr_scheduler_type: str = "linear",
+        logging_strategy: str = "steps",
+        logging_steps: int = 10,
+        logging_dir: str | None = None,
+        report_to: list[str] | None = None,
+        save_strategy: str = "steps",
+        save_steps: int = 500,
+        save_total_limit: int = 1,
+        seed: int = 0,
+    ) -> None:
+        """Train the BERT judge on prepared labeled datasets."""
         if report_to is None:
             report_to = ["tensorboard"]
 
         if training_mix:
             dataset = self._apply_training_mix(dataset, training_mix, seed)
-        else:            
+        else:
             dataset = self._flatten_dataset(dataset)
 
         dataset = self._make_prompts(dataset, include_question)
@@ -98,74 +102,80 @@ class BERTJudge:
 
     def predict(
         self,
-        questions,
-        candidates,
-        references,
-        batch_size=1,
-    ):
+        questions: list[str],
+        candidates: list[str],
+        references: list[str],
+        batch_size: int = 1,
+    ) -> list[float]:
+        """Predict per-example correctness probabilities."""
         if not questions:
             questions = [""] * len(references)
             include_question = False
         else:
             include_question = True
 
-        dataset = Dataset.from_dict({
-            "question": questions,
-            "candidate": candidates,
-            "reference": references,
-        })
+        dataset = Dataset.from_dict(
+            {
+                "question": questions,
+                "candidate": candidates,
+                "reference": references,
+            }
+        )
         dataset = self._make_prompts(dataset, include_question)
         dataset = self._tokenize_prompts(dataset)
         dataloader = self._build_dataloader(dataset, batch_size)
         self.model.eval()
-        
-        scores = []
+
+        scores: list[list[float]] = []
         with torch.no_grad():
             for batch in tqdm(dataloader):
                 batch = {k: v.to(self.model.device) for k, v in batch.items()}
                 output = self.model(**batch)
                 scores += output.logits.cpu().tolist()
-        
+
         return [torch.tensor(s[1] - s[0]).sigmoid().item() for s in scores]
-    
-    def _add_special_tokens(self):        
+
+    def _add_special_tokens(self) -> None:
+        """Ensure tokenizer/model are aligned on padding and special tokens."""
         if self.tokenizer.pad_token_id is None:
             self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
         if self.model.config.pad_token_id is None:
             self.model.config.pad_token_id = self.tokenizer.pad_token_id
-        
+
         self.tokenizer.add_tokens(list(self.special_tokens.values()))
         self.model.resize_token_embeddings(len(self.tokenizer))
 
     def _apply_training_mix(
         self,
-        dataset,
-        training_mix,
-        seed=0,
-    ):
-        processed_dataset = []
+        dataset: dict[str, Any],
+        training_mix: dict[str, dict[str, int]],
+        seed: int = 0,
+    ) -> Dataset:
+        """Sample and concatenate subsets according to `training_mix`."""
+        processed_dataset: list[Dataset] = []
         for name in training_mix:
             for split, num_samples in training_mix[name].items():
                 subset = dataset[name][split].shuffle(seed)
-                processed_dataset.append(
-                    subset.select(range(min(len(subset), num_samples)))
-                )
+                processed_dataset.append(subset.select(range(min(len(subset), num_samples))))
 
         return concatenate_datasets(processed_dataset)
-    
+
     def _flatten_dataset(
-        self, 
-        dataset,
-    ):
+        self,
+        dataset: dict[str, Any],
+    ) -> Dataset:
+        """Flatten nested task/split datasets into a single train dataset."""
         return concatenate_datasets(
             [dataset[name][split] for name in dataset for split in dataset[name]]
         )
 
     def _make_prompts(
         self,
-        dataset,
-        include_question=True,
-    ):
+        dataset: Dataset,
+        include_question: bool = True,
+    ) -> Dataset:
+        """Build model input prompts from question/candidate/reference fields."""
+
         def fn(ex):
             prompt = ""
             if include_question:
@@ -173,23 +183,25 @@ class BERTJudge:
             prompt += self.special_tokens["candidate"] + ex["candidate"]
             prompt += self.special_tokens["reference"] + ex["reference"]
             return {"prompt": prompt}
-        
+
         dataset = dataset.map(
             fn,
             num_proc=max(1, (os.cpu_count() or 1) // 2),
             keep_in_memory=True,
             load_from_cache_file=False,
         )
-        
+
         if "label" in dataset.column_names:
             return dataset.select_columns(["prompt", "label"])
         else:
             return dataset.select_columns(["prompt"])
-    
+
     def _tokenize_prompts(
         self,
-        dataset,
-    ):
+        dataset: Dataset,
+    ) -> Dataset:
+        """Tokenize prompt field for model consumption."""
+
         def fn(ex):
             return self.tokenizer(
                 ex["prompt"],
@@ -207,22 +219,23 @@ class BERTJudge:
 
     def _build_trainer(
         self,
-        dataset,
-        output_dir,
-        num_train_epochs=1,
-        batch_size=4,
-        learning_rate=2e-5,
-        warmup_ratio=0.05,
-        lr_scheduler_type="linear",
-        logging_strategy="steps",
-        logging_steps=10,
-        logging_dir=None,
-        report_to=None,
-        save_strategy="steps",
-        save_steps=500,
-        save_total_limit=1,
-        seed=0,
-    ):
+        dataset: Dataset,
+        output_dir: str,
+        num_train_epochs: float = 1,
+        batch_size: int = 4,
+        learning_rate: float = 2e-5,
+        warmup_ratio: float = 0.05,
+        lr_scheduler_type: str = "linear",
+        logging_strategy: str = "steps",
+        logging_steps: int = 10,
+        logging_dir: str | None = None,
+        report_to: list[str] | None = None,
+        save_strategy: str = "steps",
+        save_steps: int = 500,
+        save_total_limit: int = 1,
+        seed: int = 0,
+    ) -> Trainer:
+        """Create the Hugging Face trainer with all training arguments."""
         if report_to is None:
             report_to = ["tensorboard"]
 
@@ -252,17 +265,19 @@ class BERTJudge:
         )
 
     def _save_model(
-        self, 
-        output_dir,
-    ):
+        self,
+        output_dir: str,
+    ) -> None:
+        """Persist model and tokenizer to output directory."""
         self.model.save_pretrained(output_dir)
         self.tokenizer.save_pretrained(output_dir)
 
     def _build_dataloader(
-        self, 
-        dataset, 
-        batch_size,
-    ):
+        self,
+        dataset: Dataset,
+        batch_size: int,
+    ) -> DataLoader:
+        """Create deterministic dataloader for prediction."""
         data_collator = DataCollatorWithPadding(self.tokenizer)
         return DataLoader(
             dataset,

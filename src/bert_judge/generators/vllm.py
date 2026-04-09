@@ -5,19 +5,22 @@ from .base import BaseGenerator
 
 
 class vLLMGenerator(BaseGenerator):
+    """Generator implementation backed by vLLM."""
+
     def __init__(
         self,
-        model_path,
-        trust_remote_code=False,
-        dtype="bfloat16",
-        tensor_parallel_size=1,
-        temperature=0,
-        top_p=1.0,
-        top_k=-1,
-        min_p=0.0,
-        presence_penalty=0.0,
-        max_tokens=2048,
-    ):
+        model_path: str,
+        trust_remote_code: bool = False,
+        dtype: str = "bfloat16",
+        tensor_parallel_size: int = 1,
+        temperature: float = 0,
+        top_p: float = 1.0,
+        top_k: int = -1,
+        min_p: float = 0.0,
+        presence_penalty: float = 0.0,
+        max_tokens: int = 2048,
+    ) -> None:
+        """Initialize vLLM model and sampling parameters."""
         try:
             from vllm import SamplingParams
         except Exception as exc:
@@ -40,7 +43,7 @@ class vLLMGenerator(BaseGenerator):
             model_path,
             trust_remote_code,
             dtype,
-            tensor_parallel_size, 
+            tensor_parallel_size,
         )
         self.sampling_params = SamplingParams(
             temperature,
@@ -50,11 +53,12 @@ class vLLMGenerator(BaseGenerator):
             presence_penalty,
             max_tokens,
         )
-                
+
     def generate(
-        self, 
-        prompts,
-    ):
+        self,
+        prompts: list[str],
+    ) -> list[str]:
+        """Generate one completion per prompt with prompt truncation."""
         prompts = self._apply_chat_template(prompts)
         prompts = self._truncate_prompts(
             prompts,
@@ -62,14 +66,15 @@ class vLLMGenerator(BaseGenerator):
         )
         outputs = self.model.generate(prompts, self.sampling_params)
         return [output.outputs[0].text for output in outputs]
-    
+
     def _truncate_prompts(
         self,
-        prompts,
-        max_prompt_tokens,
-    ):
+        prompts: list[str],
+        max_prompt_tokens: int,
+    ) -> list[str]:
+        """Truncate prompts to fit the model context window."""
         max_prompt_tokens = max(1, int(max_prompt_tokens))
-        truncated_prompts = []
+        truncated_prompts: list[str] = []
 
         for prompt in prompts:
             tokens = self.tokenizer(

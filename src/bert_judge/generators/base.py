@@ -2,18 +2,21 @@ from ..utils import load_hf_tokenizer
 
 
 class BaseGenerator:
+    """Common generator base with tokenizer setup and chat formatting."""
+
     def __init__(
         self,
-        model_path,
-        trust_remote_code=False,
-        dtype="bfloat16",
-        temperature=0,
-        top_p=1.0,
-        top_k=-1,
-        min_p=0.0,
-        presence_penalty=0.0,
-        max_tokens=2048,
-    ):
+        model_path: str,
+        trust_remote_code: bool = False,
+        dtype: str = "bfloat16",
+        temperature: float = 0,
+        top_p: float = 1.0,
+        top_k: int = -1,
+        min_p: float = 0.0,
+        presence_penalty: float = 0.0,
+        max_tokens: int = 2048,
+    ) -> None:
+        """Initialize common generator configuration and tokenizer."""
         self.model_path = model_path
         self.trust_remote_code = trust_remote_code
         self.dtype = dtype
@@ -29,14 +32,16 @@ class BaseGenerator:
         )
         self._configure_tokenizer_padding()
 
-    def _configure_tokenizer_padding(self):
+    def _configure_tokenizer_padding(self) -> None:
+        """Set tokenizer padding token when missing."""
         if self.tokenizer.pad_token_id is None and self.tokenizer.eos_token_id is not None:
             self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
 
     def _apply_chat_template(
         self,
-        prompts,
-    ):
+        prompts: list[str],
+    ) -> list[str]:
+        """Apply tokenizer chat template when available."""
         if not hasattr(self.tokenizer, "apply_chat_template"):
             return prompts
 
@@ -45,12 +50,13 @@ class BaseGenerator:
                 [
                     {"role": "system", "content": "/no_think"},
                     {"role": "user", "content": prompt},
-                ] for prompt in prompts
+                ]
+                for prompt in prompts
             ]
         else:
             messages = [[{"role": "user", "content": prompt}] for prompt in prompts]
 
-        processed_prompts = []
+        processed_prompts: list[str] = []
 
         for _messages in messages:
             processed_prompt = self.tokenizer.apply_chat_template(
