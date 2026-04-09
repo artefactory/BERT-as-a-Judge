@@ -39,6 +39,7 @@ class BERTJudge:
             dtype,
             device_map,
         )
+        self.max_length = getattr(self.model.config, "max_position_embeddings")
         self.tokenizer = load_hf_tokenizer(
             model_path, 
             trust_remote_code=trust_remote_code,
@@ -50,7 +51,6 @@ class BERTJudge:
         dataset,
         output_dir,
         include_question=True,
-        max_length=8192,
         training_mix=None,
         num_train_epochs=1,
         batch_size=4,
@@ -75,7 +75,7 @@ class BERTJudge:
             dataset = self._flatten_dataset(dataset)
 
         dataset = self._make_prompts(dataset, include_question)
-        dataset = self._tokenize_prompts(dataset, max_length)
+        dataset = self._tokenize_prompts(dataset)
         trainer = self._build_trainer(
             dataset,
             output_dir,
@@ -102,7 +102,6 @@ class BERTJudge:
         candidates,
         references,
         batch_size=1,
-        max_length=8192,
     ):
         if not questions:
             questions = [""] * len(references)
@@ -116,7 +115,7 @@ class BERTJudge:
             "reference": references,
         })
         dataset = self._make_prompts(dataset, include_question)
-        dataset = self._tokenize_prompts(dataset, max_length)
+        dataset = self._tokenize_prompts(dataset)
         dataloader = self._build_dataloader(dataset, batch_size)
         self.model.eval()
         
@@ -127,7 +126,7 @@ class BERTJudge:
                 output = self.model(**batch)
                 scores += output.logits.cpu().tolist()
         
-        return [s[1] - s[0] for s in scores]
+        return [torch.tensor(s[1] - s[0]).sigmoid().item() for s in scores]
     
     def _add_special_tokens(self):        
         if self.tokenizer.pad_token_id is None:
@@ -190,13 +189,12 @@ class BERTJudge:
     def _tokenize_prompts(
         self,
         dataset,
-        max_length=8192,
     ):
         def fn(ex):
             return self.tokenizer(
                 ex["prompt"],
                 truncation=True,
-                max_length=max_length,
+                max_length=self.max_length,
                 truncation_side="left",
             )
 

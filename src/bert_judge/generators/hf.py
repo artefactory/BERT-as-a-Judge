@@ -42,6 +42,9 @@ class HFGenerator(BaseGenerator):
             dtype,
             device_map,
         )
+        self.max_prompt_tokens = max(
+            1, getattr(self.model.config, "max_position_embeddings") - self.max_tokens
+        )
         if self.model.config.pad_token_id is None:
             self.model.config.pad_token_id = self.tokenizer.pad_token_id
         self.model.eval()        
@@ -52,8 +55,7 @@ class HFGenerator(BaseGenerator):
         batch_size=1,
     ):
         prompts = self._apply_chat_template(prompts)
-        max_prompt_tokens = self._resolve_hf_max_model_len(self.model) - self.max_tokens
-        tokenized_prompts = self._tokenize_prompts(prompts, max_prompt_tokens)
+        tokenized_prompts = self._tokenize_prompts(prompts)
         dataloader = self._build_dataloader(tokenized_prompts, batch_size)
         generation_kwargs = self._build_generation_kwargs()
         generated_texts = []
@@ -75,35 +77,18 @@ class HFGenerator(BaseGenerator):
                     )
 
         return generated_texts
-
-    def _resolve_hf_max_model_len(
-        self,
-        model,
-    ):
-        model_max_len = getattr(model.config, "max_position_embeddings", None)
-        if model_max_len is None:
-            model_max_len = getattr(self.tokenizer, "model_max_length", None)
-            if model_max_len is None:
-                raise ValueError("Could not infer model max length from model or tokenizer.")
-
-        if int(model_max_len) > 1_000_000_000:
-            model_max_len = 8192
-
-        return int(model_max_len)
     
     def _tokenize_prompts(
         self,
         prompts,
-        max_prompt_tokens,
     ):
-        max_prompt_tokens = max(1, int(max_prompt_tokens))
         tokenized_prompts = []
 
         for prompt in prompts:
             tokenized_prompt = self.tokenizer(
                 prompt,
                 truncation=True,
-                max_length=max_prompt_tokens,
+                max_length=self.max_prompt_tokens,
                 truncation_side="left",
             )
             tokenized_prompts.append(tokenized_prompt)
