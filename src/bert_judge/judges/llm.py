@@ -94,7 +94,17 @@ class LLMJudge:
             references,
             instruction_type,
         )
+
+        ###
+        print(prompts[0])
+        ###
+
         outputs = self.generator.generate(prompts)
+
+        ###
+        print(outputs[0])
+        ###
+
         return self._compute_scores(outputs)
 
     def _apply_prompt_template(
