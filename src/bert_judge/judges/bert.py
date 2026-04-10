@@ -47,6 +47,7 @@ class BERTJudge:
             model_path,
             trust_remote_code=trust_remote_code,
         )
+        self.tokenizer.truncation_side = "left"
         self._add_special_tokens()
 
     def fit(
@@ -207,7 +208,6 @@ class BERTJudge:
                 ex["prompt"],
                 truncation=True,
                 max_length=self.max_length,
-                truncation_side="left",
             )
 
         return dataset.map(
