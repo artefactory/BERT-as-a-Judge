@@ -9,8 +9,9 @@ from datasets import Dataset, DatasetDict
 from ..judges import BERTJudge
 from ..utils import (
     discover_task_functions,
+    get_dataset_config_names,
     get_model_name,
-    load_dataset,
+    load_dataset_dict,
     load_json_list,
     parse_tasks,
 )
@@ -111,31 +112,18 @@ def build_training_dataset(
     return datasets
 
 
-def load_training_dataset(dataset_path: Path) -> dict[str, DatasetDict]:
+def load_training_dataset(dataset_path: str) -> dict[str, DatasetDict]:
     """Load training dataset from disk."""
-    dataset_path = Path(dataset_path)
-    if not dataset_path.exists():
-        raise FileNotFoundError(f"Dataset path not found: {dataset_path}")
+    dataset_path_obj = Path(dataset_path)
+    if dataset_path_obj.exists():
+        task_names = [p.name for p in dataset_path_obj.iterdir() if p.is_dir()]
+    else:
+        try:
+            task_names = get_dataset_config_names(dataset_path)
+        except Exception as exc:
+            raise FileNotFoundError(f"Dataset path not found: {dataset_path}") from exc
 
-    datasets: dict[str, DatasetDict] = {}
-    for task_dir in sorted(dataset_path.iterdir()):
-        if not task_dir.is_dir():
-            continue
-
-        splits = {}
-        for split_dir in sorted(task_dir.iterdir()):
-            if not split_dir.is_dir():
-                continue
-            split_name = split_dir.name
-            splits[split_name] = load_dataset(str(task_dir), split=split_name)
-
-        if splits:
-            datasets[task_dir.name] = DatasetDict(splits)
-
-    if not datasets:
-        raise ValueError(f"No task datasets found under: {dataset_path}")
-
-    return datasets
+    return load_dataset_dict(dataset_path, task_names)
 
 
 def save_training_dataset(datasets: dict[str, dict[str, Dataset]], dataset_path: Path) -> None:
@@ -219,32 +207,34 @@ def main() -> None:
     args = parser.parse_args()
 
     dataset_path = Path(args.dataset_path)
-    if dataset_path.exists():
+    try:
         LOGGER.info("Loading training dataset from %s", dataset_path)
-        train_dataset = load_training_dataset(dataset_path)
-    else:
+        train_dataset = load_training_dataset(str(dataset_path))
+    except FileNotFoundError as exc:
         LOGGER.info("Building training dataset")
         task_names = parse_tasks(args.tasks)
         if not task_names:
-            raise ValueError("No task names provided.")
+            raise ValueError("No task names provided.") from exc
 
         task_registry = discover_task_functions()
         unknown_tasks = sorted(set(task_names) - set(task_registry))
         if unknown_tasks:
             available = ", ".join(sorted(task_registry))
             unknown = ", ".join(unknown_tasks)
-            raise ValueError(f"Unknown task(s): {unknown}. Available task names: {available}")
+            raise ValueError(
+                f"Unknown task(s): {unknown}. Available task names: {available}"
+            ) from exc
 
         if args.label_source is None:
             raise ValueError(
                 "`--label_source` is required when building dataset from candidates/scores."
-            )
+            ) from exc
 
         candidate_models = parse_tasks(args.candidate_models or [])
         if not candidate_models:
             raise ValueError(
                 "`--candidate_models` is required when building dataset from candidates/scores."
-            )
+            ) from exc
 
         train_dataset = build_training_dataset(
             task_names=task_names,

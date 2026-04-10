@@ -17,6 +17,8 @@ from datasets import (
     get_dataset_config_names as _get_dataset_config_names,
 )
 from datasets import (
+    Dataset,
+    DatasetDict,
     load_dataset as _load_dataset,
 )
 from transformers import (
@@ -34,13 +36,67 @@ def get_dataset_config_names(path: str) -> list[str]:
     return _get_dataset_config_names(path)
 
 
+def load_dataset_dict(
+    path: str,
+    name: str | list[str] | None = None,
+    split: str | list[str] | None = None,
+) -> DatasetDict:
+    """Load one or multiple datasets as a dict of `DatasetDict`.
+
+    Args:
+        path: Dataset identifier or local path.
+        name: Optional config name(s).
+        split: Optional split name(s).
+
+    Returns:
+        A dictionary mapping each `name` to a `DatasetDict` containing
+        the requested splits.
+    """
+    path = resolve_dataset_path(path)
+    names = name if isinstance(name, list) else [name]
+    splits = split if isinstance(split, list) else [split]    
+    dataset = {}
+
+    try:
+        for name in names:
+            dataset_dict = DatasetDict()            
+            for split in splits:
+                lfd_path = (
+                    path
+                    + f"/{name}" * bool(name)
+                    + f"/{split}" * bool(split)
+                )
+                if split is None:
+                    dataset_dict = load_from_disk(lfd_path)
+                else:
+                    dataset_dict[split] = load_from_disk(lfd_path)
+            dataset[name] = dataset_dict
+
+    except Exception as exc:
+        for name in names:
+            dataset_dict = DatasetDict()
+            for split in splits:
+                ld_kwargs = {
+                    "path": path,
+                    "split": split,
+                    **({"name": name} if name is not None else {}),
+                }
+                if split is None:
+                    dataset_dict = _load_dataset(**ld_kwargs)
+                else:
+                    dataset_dict[split] = _load_dataset(**ld_kwargs)
+            dataset[name] = dataset_dict
+
+    return dataset
+
+
 def load_dataset(
     path: str,
     name: str | list[str] | None = None,
     split: str | list[str] | None = None,
     filter_fn: Callable[[dict[str, Any]], bool] | None = None,
     process_fn: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
-) -> Any:
+) -> Dataset:
     """Load and concatenate one or multiple datasets from disk or HF hub.
 
     Args:
@@ -53,37 +109,11 @@ def load_dataset(
     Returns:
         A concatenated Hugging Face dataset.
     """
-    path = resolve_dataset_path(path)
-    names = [name] if not isinstance(name, list) else name
-    splits = [split] if not isinstance(split, list) else split
-    dataset = []
-
-    try:
-        for dataset_name in names:
-            for dataset_split in splits:
-                lfd_path = (
-                    path
-                    + f"/{dataset_name}" * bool(dataset_name)
-                    + f"/{dataset_split}" * bool(dataset_split)
-                )
-                dataset.append(load_from_disk(lfd_path))
-
-    except Exception as exc:
-        LOGGER.debug("Falling back to HF dataset loading for '%s' due to: %s", path, exc)
-        for dataset_name in names:
-            for dataset_split in splits:
-                ld_kwargs = {
-                    "path": path,
-                    "split": dataset_split,
-                    **({"name": dataset_name} if dataset_name is not None else {}),
-                }
-                dataset.append(_load_dataset(**ld_kwargs))
-
-    if isinstance(dataset[0], DatasetDict):
-        dataset = concatenate_datasets([ds_dict[split] for ds_dict in dataset for split in ds_dict])
-    else:
-        dataset = concatenate_datasets(dataset)
-
+    dataset = load_dataset_dict(path, name, split)
+    dataset = concatenate_datasets([
+        dataset[name][split] for name in dataset for split in dataset[name]    
+    ])
+    
     if filter_fn is not None:
         dataset = dataset.filter(
             filter_fn,
