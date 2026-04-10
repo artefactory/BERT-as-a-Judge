@@ -206,13 +206,13 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
-    dataset_path = Path(args.dataset_path)
     try:
         LOGGER.info("Loading training dataset from %s", dataset_path)
-        train_dataset = load_training_dataset(str(dataset_path))
+        train_dataset = load_training_dataset(dataset_path)
     except FileNotFoundError as exc:
         LOGGER.info("Building training dataset")
-        task_names = parse_tasks(args.tasks)
+        dataset_path = Path(args.dataset_path)
+		task_names = parse_tasks(args.tasks)
         if not task_names:
             raise ValueError("No task names provided.") from exc
 
