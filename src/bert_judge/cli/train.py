@@ -249,10 +249,6 @@ def main() -> None:
 		save_training_dataset(train_dataset, dataset_path)
 		LOGGER.info("Saved training dataset to %s", dataset_path)
 
-	###
-	print(train_dataset)
-	###
-
 	judge = BERTJudge(
 		model_path=args.model_path,
 		trust_remote_code=args.trust_remote_code,

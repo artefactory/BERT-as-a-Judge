@@ -78,11 +78,6 @@ class BERTJudge:
             dataset = self._flatten_dataset(dataset)
 
         dataset = self._make_prompts(dataset, include_question)
-        
-        ###
-        print(dataset[0])
-        ###
-
         dataset = self._tokenize_prompts(dataset)
         trainer = self._build_trainer(
             dataset,
