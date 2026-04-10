@@ -112,7 +112,7 @@ def build_training_dataset(
 
 
 def load_training_dataset(dataset_path: Path) -> dict[str, DatasetDict]:
-    """Load cached training datasets from disk."""
+    """Load training dataset from disk."""
     dataset_path = Path(dataset_path)
     if not dataset_path.exists():
         raise FileNotFoundError(f"Dataset path not found: {dataset_path}")
