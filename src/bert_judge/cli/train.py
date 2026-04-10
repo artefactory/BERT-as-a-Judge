@@ -90,7 +90,7 @@ def build_training_dataset(
     candidates_dir: str,
     candidate_models: list[str],
     label_source: str,
-) -> dict[str, dict[str, Dataset]]:
+) -> dict[str, DatasetDict]:
     """Build nested task/split dataset structure expected by `BERTJudge.fit`."""
     datasets: dict[str, dict[str, Dataset]] = {}
     for task_name in task_names:
@@ -106,7 +106,7 @@ def build_training_dataset(
                 label_source=label_source,
             )
             splits[sanitized_model_name] = task_dataset
-        datasets[task_name] = splits
+        datasets[task_name] = DatasetDict(splits)
 
     return datasets
 
@@ -150,7 +150,7 @@ def save_training_dataset(datasets: dict[str, dict[str, Dataset]], dataset_path:
 def build_parser() -> argparse.ArgumentParser:
     """Create argument parser for the BERTJudge training CLI."""
     parser = argparse.ArgumentParser(
-        description="Train a BERTJudge from task datasets + candidates + selected judge scores.",
+        description="Train a BERTJudge model from task datasets + candidates + selected judge scores.",
     )
 
     parser.add_argument("--model_path", help="BERT judge model path or HF model id.")
