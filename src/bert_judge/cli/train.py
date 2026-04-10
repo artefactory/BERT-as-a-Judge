@@ -160,7 +160,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--candidates_dir", help="Base directory containing candidates and judge scores."
     )
-    parser.add_argument("output_dir", help="Output directory for trained BERTJudge model.")
+    parser.add_argument("--output_dir", help="Output directory for trained BERTJudge model.")
     parser.add_argument(
         "--dataset_path",
         required=True,

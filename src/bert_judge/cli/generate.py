@@ -66,7 +66,7 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="+",
         help="Task names to run (space-separated and/or comma-separated), e.g. `gsm8k_test mmlu_test_strict`.",
     )
-    parser.add_argument("output_dir", help="Base output directory.")
+    parser.add_argument("--output_dir", help="Base output directory.")
 
     parser.add_argument("--backend", choices=["hf", "vllm"], default="vllm")
     parser.add_argument("--trust_remote_code", action="store_true")
