@@ -177,7 +177,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--backend", choices=["hf", "vllm"], default="vllm", help="Used by LLMJudge."
     )
     parser.add_argument(
-        "--instruction_type", choices=["strict", "soft"], default="soft", help="Used by LLMJudge."
+        "--instruction_type", choices=["soft", "strict"], default="soft", help="Used by LLMJudge."
     )
     parser.add_argument("--enable_thinking", action="store_true")
     parser.add_argument(
