@@ -221,7 +221,7 @@ def main() -> None:
         LOGGER.info("Loading training dataset from %s", dataset_path)
         train_dataset = load_training_dataset(dataset_path)
     else:
-        LOGGER.info("Building training dataset from candidates and scores")
+        LOGGER.info("Building training dataset")
         task_names = parse_tasks(args.tasks)
         if not task_names:
             raise ValueError("No task names provided.")
