@@ -57,35 +57,35 @@ def load_dataset_dict(
     splits = split if isinstance(split, list) else [split]    
     dataset = {}
 
-    try:
-        for name in names:
-            dataset_dict = DatasetDict()            
-            for split in splits:
-                lfd_path = (
-                    path
-                    + f"/{name}" * bool(name)
-                    + f"/{split}" * bool(split)
-                )
-                if split is None:
-                    dataset_dict = load_from_disk(lfd_path)
-                else:
-                    dataset_dict[split] = load_from_disk(lfd_path)
-            dataset[name] = dataset_dict
+    # try:
+    for name in names:
+        dataset_dict = DatasetDict()            
+        for split in splits:
+            lfd_path = (
+                path
+                + f"/{name}" * bool(name)
+                + f"/{split}" * bool(split)
+            )
+            if split is None:
+                dataset_dict = load_from_disk(lfd_path)
+            else:
+                dataset_dict[split] = load_from_disk(lfd_path)
+        dataset[name] = dataset_dict
 
-    except Exception as exc:
-        for name in names:
-            dataset_dict = DatasetDict()
-            for split in splits:
-                ld_kwargs = {
-                    "path": path,
-                    "split": split,
-                    **({"name": name} if name is not None else {}),
-                }
-                if split is None:
-                    dataset_dict = _load_dataset(**ld_kwargs)
-                else:
-                    dataset_dict[split] = _load_dataset(**ld_kwargs)
-            dataset[name] = dataset_dict
+    # except Exception as exc:
+    #     for name in names:
+    #         dataset_dict = DatasetDict()
+    #         for split in splits:
+    #             ld_kwargs = {
+    #                 "path": path,
+    #                 "split": split,
+    #                 **({"name": name} if name is not None else {}),
+    #             }
+    #             if split is None:
+    #                 dataset_dict = _load_dataset(**ld_kwargs)
+    #             else:
+    #                 dataset_dict[split] = _load_dataset(**ld_kwargs)
+    #         dataset[name] = dataset_dict
 
     return dataset
 
