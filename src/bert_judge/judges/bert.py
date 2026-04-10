@@ -185,7 +185,6 @@ class BERTJudge:
 
 		dataset = dataset.map(
 			fn,
-			# num_proc=max(1, (os.cpu_count() or 1) // 2),
 			keep_in_memory=True,
 			load_from_cache_file=False,
 		)
@@ -210,7 +209,6 @@ class BERTJudge:
 
 		return dataset.map(
 			fn,
-			# num_proc=max(1, (os.cpu_count() or 1) // 2),
 			keep_in_memory=True,
 			load_from_cache_file=False,
 		).remove_columns(["prompt"])
