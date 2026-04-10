@@ -68,8 +68,17 @@ class vLLMGenerator(BaseGenerator):
             prompts,
             self.model.llm_engine.model_config.max_model_len - self.max_tokens,
         )
+
+        ###
+        print(prompts[0])
+        ###
+
         outputs = self.model.generate(prompts, self.sampling_params)
         outputs = [output.outputs[0].text.strip() for output in outputs]
+
+        ###
+        print(outputs[0])
+        ###
 
         if self.enable_thinking:
             return self._extract_answers(outputs)

@@ -39,8 +39,8 @@ class LLMJudge:
             "[REFERENCE starts here]\n{reference}\n[REFERENCE ends here]\n\n"
             "[CANDIDATE starts here]\n{candidate}\n[CANDIDATE ends here]\n\n"
             "{instruction}:\n"
-            '- "True" if the CANDIDATE is correct\n'
-            '- "False" if the CANDIDATE is incorrect'
+            '- "Final answer: True" if the CANDIDATE is correct\n'
+            '- "Final answer: False" if the CANDIDATE is incorrect'
         )
         self.strict_instruction = (
             "Respond only with exactly one of the following strings (add no additional text)"
@@ -94,17 +94,7 @@ class LLMJudge:
             references,
             instruction_type,
         )
-
-        ###
-        print(prompts[0])
-        ###
-
         outputs = self.generator.generate(prompts)
-
-        ###
-        print(outputs[0])
-        ###
-
         return self._compute_scores(outputs)
 
     def _apply_prompt_template(
@@ -140,8 +130,8 @@ class LLMJudge:
         return prompts
 
     def _compute_scores_strict(self, outputs: list[str]) -> list[int]:
-        """Return 1 when output is exactly `True`, else 0."""
-        return [(output == "True") * 1 for output in outputs]
+        """Return 1 when output is exactly `Final answer: True`, else 0."""
+        return [(output == "Final answer: True") * 1 for output in outputs]
 
     def _compute_scores_soft(self, outputs: list[str]) -> list[int]:
         """Extract final answer marker and map it to binary score."""
