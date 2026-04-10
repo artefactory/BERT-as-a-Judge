@@ -60,9 +60,9 @@ def build_parser() -> argparse.ArgumentParser:
         description="Run generations for one or more tasks and save outputs as JSON.",
     )
 
-    parser.add_argument("model_path", help="Model path or HF model id.")
+    parser.add_argument("--model_path", help="Model path or HF model id.")
     parser.add_argument(
-        "tasks",
+        "--tasks",
         nargs="+",
         help="Task names to run (space-separated and/or comma-separated), e.g. `gsm8k_test mmlu_test_strict`.",
     )

@@ -131,17 +131,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        "judge_type",
+        "--judge_type",
         choices=["BERTJudge", "LLMJudge", "RegexJudge"],
         help="Judge class to use.",
     )
     parser.add_argument(
-        "tasks",
+        "--tasks",
         nargs="+",
         help="Task names to score (space-separated and/or comma-separated).",
     )
     parser.add_argument(
-        "candidates_dir",
+        "--candidates_dir",
         help="Base directory that contains candidates and where scores will be saved.",
     )
 
