@@ -8,13 +8,13 @@ def hotpot_qa_test():
             zip(ex["context"]["title"], ex["context"]["sentences"])
             if title in ex["supporting_facts"]["title"]
         ])
-            question = (
+        question = (
             "Answer the question based on the provided context.\n\n" +
             "Context:\n" + context + "\n\n" +
             "Question: " + ex["question"]
         )
-            reference = ex["answer"]
-            return {"question": question.strip(), "reference": reference.strip()}
+        reference = ex["answer"]
+        return {"question": question.strip(), "reference": reference.strip()}
     return load_dataset("hotpotqa/hotpot_qa", name="distractor", split="validation", process_fn=process_fn)
 
 
