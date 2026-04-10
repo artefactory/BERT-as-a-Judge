@@ -28,7 +28,6 @@ class BERTJudge:
         model_path: str,
         trust_remote_code: bool = False,
         dtype: str = "bfloat16",
-        device_map: str = "auto",
     ) -> None:
         """Initialize model, tokenizer, and required special tokens."""
         self.special_tokens = {
@@ -40,7 +39,6 @@ class BERTJudge:
             model_path,
             trust_remote_code,
             dtype,
-            device_map,
         )
         self.max_length = self.model.config.max_position_embeddings
         self.tokenizer = load_hf_tokenizer(

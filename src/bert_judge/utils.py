@@ -158,7 +158,6 @@ def load_hf_generator(
     path: str,
     trust_remote_code: bool = False,
     dtype: str = "bfloat16",
-    device_map: str = "auto",
 ) -> AutoModelForCausalLM:
     """Load a causal language model from Hugging Face."""
     path = resolve_model_path(path)
@@ -167,7 +166,6 @@ def load_hf_generator(
         path,
         trust_remote_code=trust_remote_code,
         dtype=dtype,
-        device_map=device_map,
     )
 
 
@@ -175,7 +173,6 @@ def load_hf_encoder(
     path: str,
     trust_remote_code: bool = False,
     dtype: str = "bfloat16",
-    device_map: str = "auto",
 ) -> AutoModelForSequenceClassification:
     """Load a sequence classification model from Hugging Face."""
     path = resolve_model_path(path)
@@ -185,7 +182,6 @@ def load_hf_encoder(
         num_labels=2,
         trust_remote_code=trust_remote_code,
         dtype=dtype,
-        device_map=device_map,
     )
 
 

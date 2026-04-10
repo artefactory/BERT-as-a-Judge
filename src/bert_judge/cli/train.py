@@ -169,7 +169,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--trust_remote_code", action="store_true")
     parser.add_argument("--dtype", default="bfloat16")
-    parser.add_argument("--device_map", default="auto")
     parser.add_argument("--include_question", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument(
         "--training_mix",
@@ -254,7 +253,6 @@ def main() -> None:
         model_path=args.model_path,
         trust_remote_code=args.trust_remote_code,
         dtype=args.dtype,
-        device_map=args.device_map,
     )
 
     training_mix = parse_training_mix(args.training_mix)

@@ -24,7 +24,6 @@ class LLMJudge:
         presence_penalty: float = 0.0,
         max_tokens: int = 2048,
         tensor_parallel_size: int = 1,
-        device_map: str = "auto",
     ) -> None:
         """Initialize the LLM judge and backend generator."""
         self.prompt_template = (
@@ -67,7 +66,6 @@ class LLMJudge:
                 model_path=model_path,
                 trust_remote_code=trust_remote_code,
                 dtype=dtype,
-                device_map=device_map,
                 enable_thinking=enable_thinking,
                 think_token=think_token,
                 temperature=temperature,

@@ -20,7 +20,6 @@ class HFGenerator(BaseGenerator):
         model_path: str,
         trust_remote_code: bool = False,
         dtype: str = "bfloat16",
-        device_map: str = "auto",
         enable_thinking: bool = False,
         think_token: str = "</think>",
         temperature: float = 0,
@@ -48,7 +47,6 @@ class HFGenerator(BaseGenerator):
             model_path,
             trust_remote_code,
             dtype,
-            device_map,
         )
         self.max_prompt_tokens = max(1, self.model.config.max_position_embeddings - self.max_tokens)
         if self.model.config.pad_token_id is None:
