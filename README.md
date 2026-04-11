@@ -147,6 +147,61 @@ python -m bert_judge.cli.train --help
 
 ---
 
+## Adding a New Task
+
+To add a new benchmark/task, create a new Python file in `src/bert_judge/tasks/`.
+
+### Step 1: Create a task module
+
+Example: `src/bert_judge/tasks/my_custom_task.py`
+
+```python
+from ..utils import load_dataset
+
+
+def my_custom_task():
+    def process_fn(ex):
+        question = ex["question"].strip()
+        reference = ex["answer"].strip()
+        return {"question": question, "reference": reference}
+
+    return load_dataset(
+        path="my_org/my_dataset",   # HF dataset id or local dataset folder name
+        name=None,                  # optional config name
+        split="test",               # split to use
+        process_fn=process_fn,
+    )
+```
+
+### Step 2: Respect the required output schema
+
+Your task function must return a Hugging Face dataset with at least:
+
+- `question`
+- `reference`
+
+Those two fields are required by the generation/judging/training pipelines.
+
+### Step 3: Use the task from CLI
+
+Task functions are auto-discovered from `bert_judge.tasks`, so no registry file needs manual updates.
+Once your function exists, call it by its function name:
+
+```zsh
+python -m bert_judge.cli.generate \
+    --model_path meta-llama/Llama-3.2-1B-Instruct \
+    --tasks my_custom_task \
+    --output_dir ./artifacts/candidates
+```
+
+### Notes
+
+- For training/evaluation splits, you can create separate functions (for example `my_custom_task_train` and `my_custom_task_test`).
+- Keep function names unique across files in `src/bert_judge/tasks/`.
+- If you use local mirrors, `LOCAL_DATASETS_DIR` is respected by the dataset loading utilities.
+
+---
+
 ## Python Usage
 
 You can also use the package directly within your Python scripts:
@@ -157,7 +212,7 @@ from bert_judge.judges import BERTJudge
 # Initialize the judge
 judge = BERTJudge(
     model_path="hgissbkh/BERTJudge-Free-QCR",
-    trust_remote_code=False,
+    trust_remote_code=True,
     dtype="bfloat16",
     device_map="auto",
 )
