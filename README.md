@@ -214,7 +214,6 @@ judge = BERTJudge(
     model_path="hgissbkh/BERTJudge-Free-QCR",
     trust_remote_code=True,
     dtype="bfloat16",
-    device_map="auto",
 )
 
 # Predict scores
