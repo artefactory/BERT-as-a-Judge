@@ -14,28 +14,27 @@ cd BERT-as-a-Judge
 pip install -e .
 ```
 
-The project relies on the following Python packages at runtime:
-
-- `torch`
-- `transformers`
-- `datasets`
-- `tqdm`
-- `rouge-score`
-- `math-verify`
-
-Install them with:
+Next, install the required dependencies:
 
 ```bash
-pip install torch transformers datasets tqdm rouge-score math-verify
+pip install torch transformers datasets tqdm
 ```
 
-Optional (only if you want the `vllm` backend):
+Optional dependencies can be installed depending on your use case:
+
+* For using `RegexJudge`:
+
+```bash
+pip install rouge-score math-verify
+```
+
+* For enabling the `vllm` backend:
 
 ```bash
 pip install vllm
 ```
 
-Optional (recommended for smoother `transformers.Trainer` training runs):
+For smoother training with `transformers.Trainer` (recommended):
 
 ```bash
 pip install accelerate
