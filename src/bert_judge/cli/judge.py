@@ -233,7 +233,8 @@ def main() -> None:
         task_dir = base_dir / task_name / candidate_model_name
         candidates_path = task_dir / "candidates.json"
         candidates = load_candidates(candidates_path)
-        LOGGER.info("Scoring task '%s' with judge '%s'", task_name, args.judge_type)
+        judge_args_fragment = build_judge_args_fragment(args)
+		LOGGER.info("Scoring task '%s' with judge '%s (%s)'", task_name, args.judge_type, judge_args_fragment)
 
         scores = score_task(
             judge=judge,
@@ -242,7 +243,7 @@ def main() -> None:
             candidates=candidates,
             args=args,
         )
-        judge_args_fragment = build_judge_args_fragment(args)
+        
         scores_output_dir = task_dir / args.judge_type / judge_args_fragment
         scores_path = save_scores(scores, scores_output_dir)
         LOGGER.info("Saved %d scores to %s", len(scores), scores_path)

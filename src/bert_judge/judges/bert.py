@@ -121,22 +121,13 @@ class BERTJudge:
 			}
 		)
 		dataset = self._make_prompts(dataset, include_question)
-		
-        ###
-		print(dataset[0])
-		###
-
 		dataset = self._tokenize_prompts(dataset)
 		dataloader = self._build_dataloader(dataset, batch_size)
 		
 		self.model.eval()
 		if torch.cuda.is_available():
 			self.model = self.model.to("cuda")
-			
-        ###
-		print(self.model.device)
-		###
-		
+
 		scores: list[list[float]] = []
 		with torch.no_grad():
 			for batch in tqdm(dataloader, "Computing scores"):
