@@ -22,13 +22,7 @@ pip install torch transformers datasets tqdm
 
 Optional dependencies can be installed depending on your use case:
 
-* For using `RegexJudge`:
-
-```bash
-pip install rouge-score math-verify
-```
-
-* For enabling the `vllm` backend:
+* For enabling the `vllm` backend (recommended):
 
 ```bash
 pip install vllm
@@ -38,6 +32,12 @@ For smoother training with `transformers.Trainer` (recommended):
 
 ```bash
 pip install accelerate
+```
+
+* For using `RegexJudge`:
+
+```bash
+pip install rouge-score math-verify
 ```
 
 ---
