@@ -54,6 +54,8 @@ pip install rouge-score math-verify
 
 You can use the package directly in Python scripts for quick scoring. First, instantiate `BERTJudge`, then define the candidates to score along with the corresponding question(s) and reference(s), and finally compute the scores.
 
+**Example:**
+
 ```python
 from bert_judge.judges import BERTJudge
 
@@ -131,8 +133,8 @@ python -m bert_judge.cli.judge \
 ```
 
 Judging is also possible with:
-* **`LLMJudge`** ([source code](src/bert_judge/judges/llm.py))
-* **`RegexJudge`** ([source code](src/bert_judge/judges/regex.py))
+* [`LLMJudge`](src/bert_judge/judges/llm.py)
+* [`RegexJudge`](src/bert_judge/judges/regex.py)
 
 ### Notes
 
@@ -174,7 +176,6 @@ To add a new benchmark or task, create a new Python file in [`tasks/`](src/bert_
 ```python
 from ..utils import load_dataset
 
-
 def my_custom_task():
     def process_fn(ex):
         question = ex["question"].strip()
@@ -200,6 +201,8 @@ These two fields are required by the generation, judging, and training pipelines
 
 Task functions are auto-discovered from `bert_judge.tasks`, so no registry file needs manual updates. Once your function exists, call it by its function name:
 
+**Example:**
+
 ```zsh
 python -m bert_judge.cli.generate \ 
     --model_path meta-llama/Llama-3.2-1B-Instruct \ 
@@ -220,6 +223,8 @@ If you want to train a custom `BERTJudge` model using your own data, labels, bac
 
 **Step 1: Generate outputs with multiple models on multiple tasks**
 
+**Example:**
+
 ```zsh
 MODEL_PATHS=(
     "meta-llama/Llama-3.2-1B-Instruct"
@@ -237,6 +242,8 @@ done
 ```
 
 **Step 2: Generate synthetic labels with a large `LLMJudge`**
+
+**Example:**
 
 ```zsh
 CANDIDATE_MODELS=(
@@ -259,6 +266,8 @@ done
 
 **Step 3: Train `BERTJudge` on the generated labels**
 
+**Example:**
+
 ```zsh
 python -m bert_judge.cli.train \ 
     --model_path EuroBERT/EuroBERT-210m \ 
@@ -275,7 +284,7 @@ python -m bert_judge.cli.train \
 
 You can provide a JSON file to control how many examples are sampled per task and per candidate model during training.
 
-**Example file (`./artifacts/training_mix.json`):**
+**Example:** `./artifacts/training_mix.json`
 
 ```json
 {
@@ -290,7 +299,7 @@ You can provide a JSON file to control how many examples are sampled per task an
 }
 ```
 
-Then pass it to `train.py`:
+Then pass it to [`train.py`](src/bert_judge/cli/train.py).
 
 ```zsh
 python -m bert_judge.cli.train \ 
