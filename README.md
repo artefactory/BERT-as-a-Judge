@@ -52,6 +52,8 @@ pip install rouge-score math-verify
 
 ## Python Usage
 
+### Basic Usage
+
 You can use the package directly in Python scripts for quick scoring. First, instantiate `BERTJudge`, then define the candidates to score along with the corresponding question(s) and reference(s), and finally compute the scores.
 
 **Example:**
@@ -95,6 +97,25 @@ print(scores)
 [0.9946, 0.9988, 0.9888, 0.0748, 0.0300, 0.0199]
 ```
 
+### Work Locally
+
+If you wish to store models and datasets locally, consider setting `LOCAL_DATASETS_DIR` and `LOCAL_MODELS_DIR` to the corresponding paths. Make sure datasets and models keep the same name as on Hugging Face.
+
+**Example:**
+
+The following code will load `dataset` and `model` from `local/path/to/datasets/my_dataset` and `local/path/to/models/my_model`, respectively.
+
+```python
+import os
+from bert_judge.utils import load_dataset, load_hf_encoder
+
+os.environ["LOCAL_DATASETS_DIR"] = "local/path/to/datasets"
+os.environ["LOCAL_MODELS_DIR"] = "local/path/to/models"
+
+dataset = load_dataset(path="my_org/my_dataset")
+model = load_hf_encoder(path="my_org/my_model")
+```
+
 ---
 
 ## CLI Tools
@@ -103,7 +124,7 @@ For scalable, end-to-end evaluation, you can use the CLI tools provided in the p
 
 ### Step 1: Output Generation
 
-Evaluating models first requires generating model outputs on predefined tasks, which are located in the [`tasks/`](src/bert_judge/tasks/) folder. Use [`cli/generate.py`](src/bert_judge/cli/generate.py) to run a model on one or more tasks and save the generated candidates.
+Evaluating models first requires generating model outputs on predefined tasks, which are located in the [`tasks/`](src/bert_judge/tasks/) folder. Use [`cli.generate`](src/bert_judge/cli/generate.py) to run a model on one or more tasks and save the generated candidates.
 
 **Example:**
 
@@ -132,35 +153,17 @@ python -m bert_judge.cli.judge \
     --candidate_model Llama-3.2-1B-Instruct
 ```
 
-Judging is also possible with:
-* [`LLMJudge`](src/bert_judge/judges/llm.py)
-* [`RegexJudge`](src/bert_judge/judges/regex.py)
-
 ### Notes
 
+- Judging is also possible with:
+    - [`LLMJudge`](src/bert_judge/judges/llm.py)
+    - [`RegexJudge`](src/bert_judge/judges/regex.py)
 - To view all available arguments for the CLI tools, use the `--help` flag.
 
 **Example:**
 
 ```zsh
 python -m bert_judge.cli.generate --help
-```
-
-- If you wish to store models and datasets locally, consider setting `LOCAL_DATASETS_DIR` and `LOCAL_MODELS_DIR` to the corresponding paths. Make sure datasets and models keep the same name as on Hugging Face.
-
-**Example:**
-
-The following code will load `dataset` and `model` from `local/path/to/datasets/my_dataset` and `local/path/to/models/my_model`, respectively.
-
-```python
-import os
-from bert_judge.utils import load_dataset, load_hf_encoder
-
-os.environ["LOCAL_DATASETS_DIR"] = "local/path/to/datasets"
-os.environ["LOCAL_MODELS_DIR"] = "local/path/to/models"
-
-dataset = load_dataset(path="my_org/my_dataset")
-model = load_hf_encoder(path="my_org/my_model")
 ```
 
 ---
@@ -241,7 +244,7 @@ for model_path in "${MODEL_PATHS[@]}"; do
 done
 ```
 
-### Step 2: Generate synthetic labels with a large `LLMJudge`
+### Step 2: Generate synthetic labels with a powerful `LLMJudge`
 
 **Example:**
 
@@ -307,7 +310,7 @@ python -m bert_judge.cli.train \
     --training_mix ./artifacts/training_mix.json 
 ```
 
-*Note: `training_mix` keys should precisely match task names and candidate model split names in your training dataset.*
+**Note:** `training_mix` keys should precisely match task names and candidate model split names in your training dataset.
 
 ---
 
