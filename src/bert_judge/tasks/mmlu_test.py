@@ -12,7 +12,7 @@ def mmlu_test():
 		)
 		reference = ALPHABET[ex["answer"]] + ") " + ex["choices"][ex["answer"]]
 		return {"question": question.strip(), "reference": reference.strip()}
-	return load_dataset("cais/mmlu", name="all", split="test", process_fn=process_fn)
+	return load_dataset("cais/mmlu", name="all", split="test", process_fn=process_fn).select_columns(["question", "reference"])
 
 
 def mmlu_test_soft():

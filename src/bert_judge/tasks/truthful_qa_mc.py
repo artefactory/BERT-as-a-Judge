@@ -18,7 +18,7 @@ def truthful_qa_mc():
 		reference = [f"{letter}) {choice}" for letter, (choice, label) in zip(ALPHABET, choices_labels) if label == 1][0]
 		return {"question": question.strip(), "reference": reference.strip()}
 
-	return load_dataset("truthfulqa/truthful_qa", name="multiple_choice", split="validation", process_fn=process_fn)
+	return load_dataset("truthfulqa/truthful_qa", name="multiple_choice", split="validation", process_fn=process_fn).select_columns(["question", "reference"])
 
 
 def truthful_qa_mc_soft():

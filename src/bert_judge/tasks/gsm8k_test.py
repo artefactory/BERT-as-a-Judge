@@ -6,7 +6,7 @@ def gsm8k_test():
 		question = ex["question"]
 		reference = ex["answer"].split("#### ")[-1]
 		return {"question": question.strip(), "reference": reference.strip()}
-	return load_dataset("openai/gsm8k", name="main", split="test", process_fn=process_fn)
+	return load_dataset("openai/gsm8k", name="main", split="test", process_fn=process_fn).select_columns(["question", "reference"])
 
 
 def gsm8k_test_soft():

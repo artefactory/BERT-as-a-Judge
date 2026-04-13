@@ -12,7 +12,7 @@ def mmlu_train():
 		)
 		reference = ALPHABET[ex["answer"]] + ") " + ex["choices"][ex["answer"]]
 		return {"question": question.strip(), "reference": reference.strip()}
-	return load_dataset("cais/mmlu", name="all", split="auxiliary_train", process_fn=process_fn)
+	return load_dataset("cais/mmlu", name="all", split="auxiliary_train", process_fn=process_fn).select_columns(["question", "reference"])
 
 
 def mmlu_train_soft():

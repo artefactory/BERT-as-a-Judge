@@ -13,7 +13,7 @@ def arc_challenge_train():
 		answer_key = ALPHABET[int(ex["answerKey"]) - 1] if ex["answerKey"] not in ALPHABET else ex["answerKey"]
 		reference = answer_key + ") " + ex["choices"]["text"][ALPHABET.index(answer_key)]
 		return {"question": question.strip(), "reference": reference.strip()}
-	return load_dataset("allenai/ai2_arc", name="ARC-Challenge", split="train", process_fn=process_fn)
+	return load_dataset("allenai/ai2_arc", name="ARC-Challenge", split="train", process_fn=process_fn).select_columns(["question", "reference"])
 
 
 def arc_challenge_train_soft():

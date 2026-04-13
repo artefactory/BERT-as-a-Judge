@@ -10,7 +10,7 @@ def squad_v2_test():
 		)
 		reference = ex["answers"]["text"][0] if len(ex["answers"]["text"]) > 0 else "Unanswerable"
 		return {"question": question.strip(), "reference": reference.strip()}
-	return load_dataset("rajpurkar/squad_v2", split="validation", process_fn=process_fn)
+	return load_dataset("rajpurkar/squad_v2", split="validation", process_fn=process_fn).select_columns(["question", "reference"])
 
 
 def squad_v2_test_soft():

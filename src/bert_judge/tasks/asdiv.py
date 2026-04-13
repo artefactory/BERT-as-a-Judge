@@ -7,7 +7,7 @@ def asdiv():
 		reference = ex["answer"]
 		reference = reference[:reference.find(" (")]
 		return {"question": question.strip(), "reference": reference.strip()}
-	return load_dataset("EleutherAI/asdiv", split="validation", process_fn=process_fn)
+	return load_dataset("EleutherAI/asdiv", split="validation", process_fn=process_fn).select_columns(["question", "reference"])
 
 
 def asdiv_soft():

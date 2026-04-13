@@ -14,7 +14,7 @@ def drop_test():
 		reference = ex["answers_spans"]["spans"][0]
 		return {"question": question.strip(), "reference": reference.strip()}
 
-	return load_dataset("ucinlp/drop", split="validation", filter_fn=filter_fn, process_fn=process_fn)
+	return load_dataset("ucinlp/drop", split="validation", filter_fn=filter_fn, process_fn=process_fn).select_columns(["question", "reference"])
 
 
 def drop_test_soft():

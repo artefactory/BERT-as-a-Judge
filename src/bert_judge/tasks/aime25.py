@@ -6,7 +6,7 @@ def aime25():
 		question = ex["problem"]
 		reference = ex["answer"]
 		return {"question": question.strip(), "reference": reference.strip()}
-	return load_dataset("math-ai/aime25", split="test", process_fn=process_fn)
+	return load_dataset("math-ai/aime25", split="test", process_fn=process_fn).select_columns(["question", "reference"])
 
 
 def aime25_soft():

@@ -12,7 +12,7 @@ def mmlu_pro():
 		)
 		reference = ex["answer"] + ") " + ex["options"][ALPHABET.index(ex["answer"])]
 		return {"question": question.strip(), "reference": reference.strip()}
-	return load_dataset("TIGER-Lab/MMLU-Pro", split="test", process_fn=process_fn)
+	return load_dataset("TIGER-Lab/MMLU-Pro", split="test", process_fn=process_fn).select_columns(["question", "reference"])
 
 
 def mmlu_pro_soft():

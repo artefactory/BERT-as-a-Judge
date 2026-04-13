@@ -10,7 +10,7 @@ def coqa_test():
 		)
 		reference = ex["answers"]["input_text"][0]
 		return {"question": question.strip(), "reference": reference.strip()}
-	return load_dataset("EleutherAI/coqa", split="validation", process_fn=process_fn)
+	return load_dataset("EleutherAI/coqa", split="validation", process_fn=process_fn).select_columns(["question", "reference"])
 
 
 def coqa_test_soft():

@@ -19,7 +19,7 @@ def hendrycks_math_train():
 		split="train",
 		filter_fn=filter_fn,
 		process_fn=process_fn,
-	)
+	).select_columns(["question", "reference"])
 
 
 def hendrycks_math_train_soft():

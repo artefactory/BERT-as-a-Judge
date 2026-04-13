@@ -18,7 +18,7 @@ def gpqa():
 		reference = ALPHABET[choices.index(ex["Correct Answer"])] + ") " + ex["Correct Answer"]
 		return {"question": question.strip(), "reference": reference.strip()}
 
-	return load_dataset("Idavidrein/gpqa", name="gpqa_main", split="train", process_fn=process_fn)
+	return load_dataset("Idavidrein/gpqa", name="gpqa_main", split="train", process_fn=process_fn).select_columns(["question", "reference"])
 
 
 def gpqa_soft():

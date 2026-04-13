@@ -8,7 +8,7 @@ def aime24():
 		question = ex["problem"]
 		reference = re.findall(r"\\boxed\{([^}]*)\}", ex["solution"])[0]
 		return {"question": question.strip(), "reference": reference.strip()}
-	return load_dataset("math-ai/aime24", split="test", process_fn=process_fn)
+	return load_dataset("math-ai/aime24", split="test", process_fn=process_fn).select_columns(["question", "reference"])
 
 
 def aime24_soft():

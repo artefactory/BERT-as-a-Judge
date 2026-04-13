@@ -15,7 +15,7 @@ def hotpot_qa_train():
 		)
 		reference = ex["answer"]
 		return {"question": question.strip(), "reference": reference.strip()}
-	return load_dataset("hotpotqa/hotpot_qa", name="distractor", split="train", process_fn=process_fn)
+	return load_dataset("hotpotqa/hotpot_qa", name="distractor", split="train", process_fn=process_fn).select_columns(["question", "reference"])
 
 
 def hotpot_qa_train_soft():
