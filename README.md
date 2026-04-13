@@ -143,6 +143,10 @@ Once the candidate answers are generated, they need to be evaluated using a judg
 **Example:**
 
 ```zsh
+# Optional: set local model and dataset directories
+export LOCAL_MODELS_DIR="local/path/to/models"
+export LOCAL_DATASETS_DIR="local/path/to/datasets"
+
 python -m bert_judge.cli.judge \ 
     --judge_type BERTJudge \ 
     --model_path hgissbkh/BERTJudge-Free-QCR \ 
@@ -310,7 +314,7 @@ python -m bert_judge.cli.train \
     --training_mix ./artifacts/training_mix.json 
 ```
 
-**Note:** `training_mix` keys should precisely match task names and candidate model split names in your training dataset.
+`training_mix` keys should precisely match task names and candidate model split names in your training dataset.
 
 ---
 
