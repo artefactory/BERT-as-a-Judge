@@ -221,7 +221,7 @@ python -m bert_judge.cli.generate \
 
 If you want to train a custom `BERTJudge` model using your own data, labels, backbone, or training recipe, you can use [`train.py`](src/bert_judge/cli/train.py). The common workflow involves three steps:
 
-**Step 1: Generate outputs with multiple models on multiple tasks**
+### Step 1: Generate outputs with multiple models on multiple tasks
 
 **Example:**
 
@@ -241,7 +241,7 @@ for model_path in "${MODEL_PATHS[@]}"; do
 done
 ```
 
-**Step 2: Generate synthetic labels with a large `LLMJudge`**
+### Step 2: Generate synthetic labels with a large `LLMJudge`
 
 **Example:**
 
@@ -264,7 +264,7 @@ for candidate_model in "${CANDIDATE_MODELS[@]}"; do
 done
 ```
 
-**Step 3: Train `BERTJudge` on the generated labels**
+### Step 3: Train `BERTJudge` on the generated labels
 
 **Example:**
 
@@ -280,7 +280,7 @@ python -m bert_judge.cli.train \
     --output_dir ./artifacts/models/BERTJudge-Toy
 ```
 
-**Optional: Control sampling with `--training_mix`**
+### Optional: Control sampling with `--training_mix`
 
 You can provide a JSON file to control how many examples are sampled per task and per candidate model during training.
 
