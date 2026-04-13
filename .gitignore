@@ -5,3 +5,4 @@ artifacts/
 .venv/
 .pytest_cache/
 .DS_Store
+*.egg-info/
