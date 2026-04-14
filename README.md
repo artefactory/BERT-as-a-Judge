@@ -122,9 +122,9 @@ model = load_hf_encoder(path="my_org/my_model")
 
 For scalable, end-to-end evaluation, you can use the CLI tools provided in the package.
 
-### Step 1: Output Generation
+### Step 1: Candidate Answers Generation
 
-Evaluating models first requires generating model outputs on predefined tasks, which are implemented in the [`tasks`](src/bert_judge/tasks/) module. Use [`cli.generate`](src/bert_judge/cli/generate.py) to run a model on one or more tasks and save the generated candidates.
+Evaluating models first requires generating model answers on predefined tasks, which are implemented in the [`tasks`](src/bert_judge/tasks/) module. Use [`cli.generate`](src/bert_judge/cli/generate.py) to run a model on one or more tasks and save the generated candidates.
 
 **Example:**
 
@@ -140,7 +140,7 @@ python -m bert_judge.cli.generate \
     --backend vllm
 ```
 
-### Step 2: Judging Outputs
+### Step 2: Judging Answers
 
 Once the candidate answers are generated, they need to be evaluated using a judge module. Use [`cli.judge`](src/bert_judge/cli/judge.py) to run the evaluation.
 
@@ -224,11 +224,11 @@ python -m bert_judge.cli.generate \
 
 ---
 
-## Training BERTJudge
+## Training BERTJudge on Your Data
 
 If you want to train a custom `BERTJudge` model using your own data, labels, backbone, or training recipe, you can use [`cli.train`](src/bert_judge/cli/train.py). The common workflow involves three steps:
 
-### Step 1: Generate outputs with multiple models on multiple tasks
+### Step 1: Generate candidate answers with multiple models on multiple tasks
 
 **Example:**
 
@@ -248,7 +248,7 @@ for model_path in "${MODEL_PATHS[@]}"; do
 done
 ```
 
-### Step 2: Generate synthetic labels with a powerful `LLMJudge`
+### Step 2: Generate synthetic judgment labels with a powerful `LLMJudge`
 
 **Example:**
 
@@ -271,7 +271,7 @@ for candidate_model in "${CANDIDATE_MODELS[@]}"; do
 done
 ```
 
-### Step 3: Train `BERTJudge` on the generated labels
+### Step 3: Train `BERTJudge` on the generated judgment labels
 
 **Example:**
 
